@@ -66,18 +66,28 @@ func GeminiHistory(c *gin.Context) {
 
 	return
 
-}
+   }
   ctx := context.Background()
   client, err := genai.NewClient(ctx, &genai.ClientConfig{
       APIKey:  os.Getenv("GEMINI_API_KEY"),
       Backend: genai.BackendGeminiAPI,
   })
+  
   if err != nil {
 	log.Println("❌ Error creating Gemini client:", err)
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Gemini client"})
 	return
 	}
 
+
+	prompt :=`
+	You are a cat. Your name is Neko.
+	`
+
+	instruction := &genai.GenerateContentConfig{
+		SystemInstruction: genai.NewContentFromText(prompt, genai.RoleUser),
+	}
+  
 	var historyConversations []entity.Conversation
 	if err := config.DB().Where("chat_room_id = ?", question.ChatRoomID).Order("created_at asc").Find(&historyConversations).Error; err != nil {
 		log.Println("❌ Error fetching history:", err)
@@ -97,13 +107,12 @@ func GeminiHistory(c *gin.Context) {
 		history = append(history, genai.NewContentFromText(conv.Message, role))
 	}
 
-  chat, err := client.Chats.Create(ctx, "gemini-2.0-flash", nil, history)
+  chat, err := client.Chats.Create(ctx, "gemini-2.0-flash", instruction, history)
   if err != nil {
 	  log.Println("❌ Error creating chat:", err)
 	  c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat"})
 	  return
   }
-
   res,err := chat.SendMessage(ctx, genai.Part{Text: question.Message})
   if err != nil {
 	  log.Println("❌ Error sending message:", err)
