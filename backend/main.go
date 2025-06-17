@@ -26,6 +26,7 @@ func main() {
 	})
 
 	r.POST("/gemini", controller.GeminiHistory)
+	r.GET("/conversation/:id", controller.GetConversationHistory)
     
 
 	r.Run("localhost:" + PORT)

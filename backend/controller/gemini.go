@@ -214,3 +214,10 @@ Context:
 %s
 `, p.Objective, p.Persona, p.Tone, p.Instruction, p.Constraint, p.Context)
 }
+
+func GetConversationHistory(c *gin.Context) {
+	var conversations []entity.Conversation
+	db := config.DB()
+	db.Where("chat_room_id = ?", c.Param("id")).Find(&conversations)
+	c.JSON(http.StatusOK, conversations)
+}
